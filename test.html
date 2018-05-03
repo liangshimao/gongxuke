@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Video Player</title>
+    <!-- basic styles -->
+    <link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/bootstrap/3.0.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/3.2.1/css/font-awesome.min.css"/>
+
+    <!--[if IE 7]>
+    <link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/3.2.1/css/font-awesome-ie7.min.css"/>
+    <![endif]-->
+    <script src="//cdn.bootcss.com/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdn.bootcss.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="https://oss.maxcdn.com/libs/html5shiv/3.6.2/html5shiv.js"></script>
+    <script type="text/javascript" src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+    <script>
+        var baseurl = getContextPath() + "/wt";
+
+        var finishurl = getContextPath() + "/finish";
+
+        var finishextendurl = getContextPath() + "/finishextend";
+
+        var isRunning = false;
+        var times = 0;
+        var uid = "";
+        $.ajax({
+            type: "POST",
+            url: baseurl,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(GetJsonData()),
+            dataType: "jsonp",
+            jsonp: "callback",
+            jsonpCallback: "WTH",
+            success: function (json) {
+                uid = json.uuid;
+                $("#video1").attr("src", json.URL);
+            },
+            error: function (message) {
+                uid = "";
+                $("#statusbar").html("视频资源获取失败！");
+            }
+        });
+
+        function getContextPath() {
+            var pathName = document.location.pathname;
+            var index = pathName.substr(1).indexOf("/");
+            var result = pathName.substr(0, index + 1);
+            return result;
+        }
+        function GetJsonData() {
+            var json = {"command": "getURL"};
+            return json;
+        }
+        function GetJsonData1() {
+            var json = {"command": "putTimes|" + uid + "|" + times};
+            return json;
+        }
+
+        function GetJsonDataPlay() {
+            var json = {"command": "onPlay"};
+            return json;
+        }
+
+        function onPlay() {
+            $("#statusbar").html("开始播放！");
+            $.ajax({
+                type: "POST",
+                url: baseurl,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(GetJsonDataPlay()),
+                dataType: "jsonp",
+                jsonp: "callback",
+                jsonpCallback: "WTH",
+                success: function (json) {
+                },
+                error: function (message) {
+                }
+            });
+        }
+        function onPause() {
+            isRunning = false;
+            $("#statusbar").html("暂停！");
+        }
+        function onEnded() {
+            isRunning = false;
+            $("#statusbar").html("播放结束！");
+        }
+        function onPlaying() {
+            isRunning = true;
+            $("#statusbar").html("正在播放！");
+        }
+
+        function getBrowserInfo() {
+            var userAgent = navigator.userAgent;
+            var isOpera = userAgent.indexOf("Opera") > -1;
+            if (isOpera) {
+                return "Opera"
+            }
+            ;
+            if (userAgent.indexOf("Firefox") > -1) {
+                return "FF";
+            }
+            if (userAgent.indexOf("Chrome") > -1) {
+                return "Chrome";
+            }
+            if (userAgent.indexOf("Safari") > -1) {
+                return "Safari";
+            }
+            if (userAgent.indexOf("compatible") > -1 && userAgent.indexOf("MSIE") > -1 && !isOpera) {
+                return "IE";
+            }
+            ;
+        }
+
+        function playedvedio() {
+            $.ajax({
+                type: "POST",
+                url: baseurl,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(GetJsonDataPlay()),
+                dataType: "jsonp",
+                jsonp: "callback",
+                jsonpCallback: "WTH",
+                success: function (json) {
+                },
+                error: function (message) {
+                }
+            });
+        }
+        function recordstudy() {
+            $.ajax({
+                type: "post",
+                url: finishurl,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(GetJsonData1()),
+                dataType: "jsonp",
+                jsonp: "callback",
+                jsonpCallback: "WTH",
+                success: function (json) {
+                },
+                error: function (message) {
+                }
+            });
+        }
+
+        function finishstudy_extend() {
+            $.ajax({
+                type: "get",
+                url: finishextendurl,
+                contentType: "application/json; charset=utf-8",
+                data: { "uuid": uid, "times": times}
+            });
+        }
+
+        function finishstudy() {
+            $.ajax({
+                type: "post",
+                url: finishurl,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(GetJsonData1()),
+                dataType: "jsonp",
+                jsonp: "callback",
+                jsonpCallback: "WTH",
+                success: function (json) {
+                    window.close();
+                },
+                error: function (message) {
+                }
+            });
+        }
+        function onbeforeunloadFunc() {
+            var et = getBrowserInfo();
+            if (uid == "guest" || uid.length < 10) {
+                if (et == "FF") {
+                    return 1;
+                } else {
+                    return;
+                }
+            }
+            $.ajax({
+                type: "POST",
+                url: finishurl,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(GetJsonData1()),
+                dataType: "jsonp",
+                jsonp: "callback",
+                jsonpCallback: "WTH",
+                success: function (json) {
+                },
+                error: function (message) {
+                }
+            });
+            if (et == "FF") {
+                return 1;
+            }
+
+        }
+
+        window.onunload = onbeforeunloadFunc;
+
+        if (k != 0) {
+            clearInterval(k);
+        }
+        var k = setInterval(function () {
+            if (isRunning) {
+                times++;
+                var minute = Math.floor(times / 60);
+                var second = times % 60;
+                if (minute > 0) {
+                    $("#statusbar").html("您已经观看" + minute + "分" + second + "秒");
+                } else {
+                    $("#statusbar").html("您已经观看" + second + "秒");
+                }
+
+                if (times % 60 == 0) {
+                    //                   recordstudy();
+                    finishstudy_extend();
+                }
+                if (times % 20 == 0) {
+                    playedvedio();
+                }
+
+                if (times % 900 == 0) {
+                    document.getElementById('video1').pause(); // 暂停
+                }
+            }
+        }, 1000);
+
+        function isAnonymous(callback) {
+            if(!$(document).data("anonymous")) {
+                callback();
+                return true;
+            }
+            $.ajax({
+                type: "POST",
+                url: "[[${#httpServletRequest.getContextPath()} + '/ping.action']]",
+                dataType:'json',
+                success:function(resp, textStatus, jqXHR) {
+                    if(resp && resp.code == 0) {
+                        $(document).removeData("anonymous")
+                    } else {
+                        $(document).data("anonymous", true)
+                    }
+                },
+                error:function (XMLHttpRequest, textStatus, errorThrown) {}
+            });
+        }
+        $(function() {
+            var base_path = getContextPath();
+            $(document).data('anonymous', true);
+            $.ajax({
+                type: "get",
+                url: base_path + "/ping.action",
+                dataType:'json',
+                success:function(resp, textStatus, jqXHR) {
+                    if(resp && resp.code == 0) {
+                        $(document).removeData("anonymous")
+                    }
+                },
+                error:function (XMLHttpRequest, textStatus, errorThrown) {}
+            });
+            $("body").on("click", ".acl-login", function(e) {
+                if($(document).data("anonymous") == true) {
+                    alert("请登录");
+                    return false;
+                }
+                return true;
+            }).on("click", ".s-cart-a", function(e) {
+                e.preventDefault();
+                if($(document).data("anonymous") == true) {
+                    return false;
+                }
+                var href = $(this).attr("href");
+                $.ajax({
+                    type: "POST",
+                    url: href,
+                    dataType:"json",
+                    success: function (data, textStatus, jqXHR) {
+                        if(data.code == 0) {
+                            alert("商品已添加到购物车");
+                            var cart_num = $("#cart-count").text();
+                            if($.isNumeric(cart_num)) {
+                                $("#cart-count").text(parseInt(cart_num) + 1);
+                            } else {
+                                $("#cart-count").text("1");
+                            }
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {}
+                });
+                return false;
+            });
+
+            // 推荐课程
+            $.ajax({
+                type: "get",
+                url: base_path + '/recommend/courses.json',
+                dataType: "json",
+                success: function (resp) {
+                    $.each(resp, function(i, item) {
+                        var tpl = '<div class="col-xs-3 c-item">' +
+                            '  <a href="{href}" class="c-cover">{cover}</a>' +
+                            '  <div class="c-desc">' +
+                            '    <span class="c-title">课程名称：{title}</span>' +
+                            '    <span class="c-teacher">主讲人：{teacher}</span>' +
+                            '    <span class="c-knowledge">职称：{knowledge}</span>' +
+                            '    <span class="c-price">价格：{price}￥</span>' +
+                            '    <a class="btn btn-xs btn-primary" href="{listen}">试听</a>';
+                        if(item.sellable == 'Y') {
+                            tpl += '    <a class="btn btn-xs btn-primary acl-login s-cart-a" href="{cart}">加入购物车</a>';
+                        }
+                        tpl += '  </div></div>';
+                        tpl = tpl.replace("{href}", base_path + "/courses/" + item.id + ".action")
+                            .replace("{cover}", !!item.cover ? "<img src='" + item.cover + "@100h_76w_2e'/>" : "")
+                            .replace("{title}", item.name.length>5?item.name.substring(0,5)+'..':item.name)
+                            .replace("{teacher}", !!item.teacher ? item.teacher.name : "")
+                            .replace("{knowledge}", !!item.knowledge ? (item.knowledge.name.length>5?item.knowledge.name.substring(0,5)+'..':item.knowledge.name) : "")
+                            .replace("{price}", $.isNumeric(item.price) ? item.price/100 : "")
+                            .replace("{listen}", base_path + "/courseplay.action?id=" + item.id)
+                            .replace("{cart}", base_path + "/cart/add.action?id=" + item.id + "&type=5");
+                        $("#course-container").append(tpl);
+                    });
+
+                },
+                error: function () {}
+            });
+        });
+    </script>
+</head>
+<body onbeforeunload="return onbeforeunloadFunc()">
+<style type="text/css">
+    body {background: #525157;}
+    .c-item {height:120px;}
+    .c-cover {display:inline-block;vertical-align:top;width:76px;height:100px;}
+    .c-desc {display:inline-block;padding:0px 10px;}
+    .c-title,.c-teacher,.c-knowledge,.c-price {display:block;color:#fff;}
+</style>
+<div class="container">
+    <div class="text-center">
+        <video id="video1" name="video1" width="800" height="600" controls autoplay="autoplay" onplay="onPlay()"
+               onpause="onPause()" onended="onEnded()" onplaying="onPlaying()">
+            <source id="source" src="" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'></source>
+        </video>
+        <div class="c-title" id="statusbar"></div>
+    </div>
+    <hr/>
+    <div id="course-container" class="row"></div>
+</div>
+
+</body>
+<script>
+    function stop(){
+        return false;
+    }
+    document.oncontextmenu=stop;
+</script>
+</html>

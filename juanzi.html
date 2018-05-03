@@ -1,0 +1,1135 @@
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+</head>
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<link href="../style/exam/css/exampaper.css" rel="stylesheet" type="text/css"/>
+<link href="../../style/exam/css/exampaper.css" rel="stylesheet" type="text/css"/>
+
+<script>
+
+    function notshow(a) {
+        var idmsg = "EOV" + a;
+        var k = document.getElementById(idmsg)
+        k.setAttribute('class', 'ExamOrderViewWait');
+    }
+    function show(a) {
+//            EOV2
+        var idmsg = "EOV" + a;
+        var k = document.getElementById(idmsg)
+        k.setAttribute('class', 'ExamOrderViewVisited');
+    }
+    if (autosub01 != null) {
+        clearInterval(autosub01);
+    }
+    if (autosub02 != null) {
+        clearInterval(autosub02);
+    }
+    if (autosub03 != null) {
+        clearInterval(autosub03);
+    }
+    var autosub01;
+    var autosub02;
+    var autosub03;
+    function initmsg() {
+
+        if (autosub01 != null) {
+            clearInterval(autosub01);
+        }
+        if (autosub02 != null) {
+            clearInterval(autosub02);
+        }
+        if (autosub03 != null) {
+            clearInterval(autosub03);
+        }
+    }
+    function reloadmsg() {
+        var paperid = $('#paperid').val();
+        var p_id = $('#planid').val();
+        var c_id = $('#courseid').val();
+        var o_id = $('#ordersid').val();
+        var o_cn = $('#cardno').val();
+        var o_ty = $('#type').val();
+        $.ajax({
+            type: "get",
+            dataType: "json",
+            url: "http://" + document.location.host + "/u/plansexamreload",
+            data: {"paperid": paperid, "planid": p_id, "courseid": c_id, "ordersid": o_id, "cardno": o_cn, "type": o_ty, "r": Math.floor(100000000* Math.random())},
+            success: function (result) {
+                if (result != null) {
+                    //操作成功后的操作！msg是后台传过来的值
+
+                    var examsubmittime = $('#examsubmittime').val();
+                    if (examsubmittime > 1) {
+                        var begindate = result.user.begindate;
+                        if (begindate == null) {
+                            var lasttime = examsubmittime * 60;
+                            timer(lasttime);
+                        } else {
+                            var now = result.user.now;
+                            var p_time = (now - begindate) / 1000;
+                            var lasttime = examsubmittime * 60 - parseInt(p_time);
+                            timer(lasttime);
+                        }
+                    } else {
+                        autosub01 = self.setInterval("clock()", 1000);
+                    }
+
+                    autosub02 = self.setInterval("subit()", 300000);
+                    var questionsize = result.user.questionsize;
+
+                    for (var k = 0; k < questionsize; k++) {
+                        var answer = result[k].answer;
+                        var type = result[k].type;
+                        var id = result[k].questionid;
+                        var an = "answer" + id;
+
+                        if (type == '判断') {
+
+                            var an = "answer" + id;
+                            var inid = 'radio0_' + answer + id;
+                            if (answer == '0') {
+                                document.getElementById(an).innerHTML = '我的答案：X';
+                                document.getElementById(inid).click();
+                            } else {
+                                document.getElementById(an).innerHTML = '我的答案：√';
+                                document.getElementById(inid).click();
+                            }
+                        } else if (type == '单选') {
+                            answer = answer.toUpperCase();
+                            var inid = 'radio1_' + answer + id;
+                            document.getElementById(inid).click();
+                            document.getElementById(an).innerHTML = '我的答案：' + answer;
+                        } else if (type == '多选') {
+                            answer = answer.toUpperCase();
+                            var inid = "";
+                            if (answer.indexOf("A") > -1) {
+                                inid = 'radio2_A' + id;
+                                document.getElementById(inid).click();
+                            }
+                            if (answer.indexOf("B") > -1) {
+                                var inid = 'radio2_B' + id;
+                                document.getElementById(inid).click();
+                            }
+                            if (answer.indexOf("C") > -1) {
+                                var inid = 'radio2_C' + id;
+                                document.getElementById(inid).click();
+                            }
+                            if (answer.indexOf("D") > -1) {
+                                var inid = 'radio2_D' + id;
+                                document.getElementById(inid).click();
+                            }
+                            var obj = document.getElementsByName(id);
+                            //取到对象数组后，我们来循环检测它是不是被选中
+                            var s = '';
+                            for (var i = 0; i < obj.length; i++) {
+                                if (obj[i].checked) s += obj[i].value;
+                            }
+                            document.getElementById(an).innerHTML = '我的答案：' + s + '<input type="hidden" name="duoxuan_' + id + '" value="' + s + '"/>';
+                        } else if (type == '填空') {
+                            var inid = 'radio1_' + id;
+
+                            document.getElementById(inid).innerHTML = answer;
+
+                        } else if (type == '简答') {
+                            var inid = 'radio1_' + id;
+                            document.getElementById(inid).innerHTML = answer;
+                        }
+                    }
+                }
+            }
+        });
+    }
+    var kms = 0;
+    function timer(intDiff) {
+
+        autosub03 = window.setInterval(function () {
+            var day = 0,
+                hour = 0,
+                minute = 0,
+                second = 0;//时间默认值
+
+            if (intDiff < 0) {
+                if (kms == 0) {
+                    initmsg();
+                    $('#subform').click();
+
+                    kms = 1;
+                }
+            }
+
+            if (intDiff > 0) {
+                day = Math.floor(intDiff / (60 * 60 * 24));
+                hour = Math.floor(intDiff / (60 * 60)) - (day * 24);
+                minute = Math.floor(intDiff / 60) - (day * 24 * 60) - (hour * 60);
+                second = Math.floor(intDiff) - (day * 24 * 60 * 60) - (hour * 60 * 60) - (minute * 60);
+            }
+            if (minute <= 9) minute = '0' + minute;
+            if (second <= 9) second = '0' + second;
+
+            $('#hour_show').html(hour + '时');
+            $('#minute_show').html(minute + '分');
+            $('#second_show').html(second + '秒');
+            intDiff--;
+
+        }, 1000);
+    }
+
+    var examsubmit = $('#examsubmit').val();
+    function clock() {
+        var mydate = new Date()
+        $('#hour_show').html('<s id="h"></s>' + mydate.getHours() + '时');
+        $('#minute_show').html('<s></s>' + mydate.getMinutes() + '分');
+        $('#second_show').html('<s></s>' + mydate.getSeconds() + '秒');
+    }
+
+    function loadpd(a, id, k) {
+        var an = "answer" + id;
+        if (a.value == '0') {
+            document.getElementById(an).innerHTML = '我的答案：X';
+        } else {
+            document.getElementById(an).innerHTML = '我的答案：√';
+        }
+        show(k);
+
+    }
+    function loaddanx(a, id, k) {
+        var an = "answer" + id;
+        document.getElementById(an).innerHTML = '我的答案：' + a.value;
+        if (a.value.length > 0) {
+            show(k);
+        } else {
+            notshow(k);
+        }
+
+    }
+    function loadduox(a, id, k) {
+        var an = "answer" + id;
+
+        var obj = document.getElementsByName(a.name);
+        //取到对象数组后，我们来循环检测它是不是被选中
+        var s = '';
+        for (var i = 0; i < obj.length; i++) {
+            if (obj[i].checked) s += obj[i].value;
+        }
+        document.getElementById(an).innerHTML = '我的答案：' + s + '<input type="hidden" name="duoxuan_' + a.name + '" value="' + s + '"/>';
+
+        if (s.length > 0) {
+            show(k);
+        } else {
+            notshow(k);
+        }
+    }
+    function loadtk(id, k) {
+
+        var an = "radio1_" + id;
+        var obj = document.getElementById(an).value;
+
+        if (obj.length > 0) {
+            show(k);
+        } else {
+            notshow(k);
+        }
+    }
+    function loadjd(id, k) {
+        var an = "radio1_" + id;
+        var obj = document.getElementById(an).value;
+        if (obj.length > 0) {
+            show(k);
+        } else {
+            notshow(k);
+        }
+
+    }
+    //暂存
+    function subit() {
+        $.ajax({
+            type: "GET",
+            url: "http://" + document.location.host + "/u/plansexamtosubmit?savetype=0",
+            data: $('#formmsg').serialize(),
+            dataType: "json",
+
+        });
+    }
+    function int(){
+        var formUrl= "http://" + document.location.host+ "/u/plansexamtosubmit?savetype=1";
+        $("#formmsg").attr("action",formUrl);
+    }
+</script>
+
+
+<body onload="int()">
+<form action="../u/plansexamtosubmit?savetype=1" onsubmit="return validateCallback(this, navTabAjaxDone)" method="post"
+      id="formmsg">
+
+    <input type="hidden" id="planid" name="planid" value=""/>
+    <input type="hidden" id="courseid" name="courseid" value=""/>
+    <input type="hidden" id="ordersid" name="ordersid" value=""/>
+    <input type="hidden" id="cardno" name="cardno" value=""/>
+    <input type="hidden" id="type" name="type" value=""/>
+
+
+    <input type="hidden" id="paperid" name="paperid" value="645"/>
+    <input type="hidden" id="setspaperid" name="setspaperid" value="6"/>
+    <input type="hidden" id="examsubmit" name="examsubmit" value="0"/>
+    <input type="hidden" id="examsubmittime" name="examsubmittime" value="120"/>
+    <input type="hidden" id="begindate" name="begindate" value=""/>
+    <input type="hidden" id="now" name="now" value=""/>
+
+
+    <h2 class="contentTitle">1：专业技术人员标准化的理论、方法与实践>【河北省2017】专业技术人员标准化的理论、方法与实践试卷
+        >试卷6</h2>
+
+    <div align="center" style="width:416px; margin:0 auto">
+        <div class="time-item">
+            <strong id="hour_show">0时</strong>
+            <strong id="minute_show">0分</strong>
+            <strong id="second_show">0秒</strong>
+        </div>
+        <!--倒计时模块-->
+    </div>
+    <br>
+
+
+    <div style="width:100%; height:80%; overflow:auto; border:0px solid #000000;">
+
+        <div class="divider"></div>
+        <label class="qtype">判断题</label>
+        <div id="question_1">
+            <label class="qtitle">1：[3分]“标准孵化工程中心”已纳入到北京国家创新型城市总体规划实施方案创新技术支撑工程，通过构建标准、专利、人才的孵化机制，集成标准化、知识产权、检测、认证等服务，为深圳企业提供高端集成式服务平台。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13522" name='pd_3522' value='1'
+                                         onclick="loadpd(this,3522,1)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03522" name='pd_3522' value='0'
+                                         onclick="loadpd(this,3522,1)">错误</label>
+        </div>
+        <div id='answer3522' class="qanswer">我的答案：</div>
+
+
+        <div id="question_2">
+            <label class="qtitle">2：[3分]现代标准体系诞生以后，开始关注的是产品、产品质量，后来随着服务贸易的迅速发展，国际标准组织开始关注服务标准的标准化工作。再后来，经济、社会、科技的发展使得人们不仅关注产品和服务的标准化问题，也开始关注这些产品和服务提供过程中组织的质量和社会公平正义问题，可以说国际标准化组织的业务领域随着“社会需要”而不断拓展。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13498" name='pd_3498' value='1'
+                                         onclick="loadpd(this,3498,2)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03498" name='pd_3498' value='0'
+                                         onclick="loadpd(this,3498,2)">错误</label>
+        </div>
+        <div id='answer3498' class="qanswer">我的答案：</div>
+
+
+        <div id="question_3">
+            <label class="qtitle">3：[3分]标准化与创新的关系是标准化是创新的重要条件之一，正确地理解和实施标准化不仅不会妨碍创新，恰恰会促进创新。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13529" name='pd_3529' value='1'
+                                         onclick="loadpd(this,3529,3)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03529" name='pd_3529' value='0'
+                                         onclick="loadpd(this,3529,3)">错误</label>
+        </div>
+        <div id='answer3529' class="qanswer">我的答案：</div>
+
+
+        <div id="question_4">
+            <label class="qtitle">4：[3分]标准化过程需要进行必要的协调，尤其是部门职能原因导致的认识不一致。需要本着“标准化原理和服务对象需求”的精神，超越部门利益，站在更高的立场，在坚持原则基础上，达成一致。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13531" name='pd_3531' value='1'
+                                         onclick="loadpd(this,3531,4)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03531" name='pd_3531' value='0'
+                                         onclick="loadpd(this,3531,4)">错误</label>
+        </div>
+        <div id='answer3531' class="qanswer">我的答案：</div>
+
+
+        <div id="question_5">
+            <label class="qtitle">5：[3分]模块化主要是针对复杂系统（产品或工程）开展的标准化形式。模块化通常包括模块化设计、模块化生产和模块化装配。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13484" name='pd_3484' value='1'
+                                         onclick="loadpd(this,3484,5)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03484" name='pd_3484' value='0'
+                                         onclick="loadpd(this,3484,5)">错误</label>
+        </div>
+        <div id='answer3484' class="qanswer">我的答案：</div>
+
+
+        <div id="question_6">
+            <label class="qtitle">6：[3分]各国和地区均合理安排财政资金投入，以支持标准化工作。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13517" name='pd_3517' value='1'
+                                         onclick="loadpd(this,3517,6)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03517" name='pd_3517' value='0'
+                                         onclick="loadpd(this,3517,6)">错误</label>
+        </div>
+        <div id='answer3517' class="qanswer">我的答案：</div>
+
+
+        <div id="question_7">
+            <label class="qtitle">7：[3分]社会责任标准的适用对象为“企业”。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13503" name='pd_3503' value='1'
+                                         onclick="loadpd(this,3503,7)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03503" name='pd_3503' value='0'
+                                         onclick="loadpd(this,3503,7)">错误</label>
+        </div>
+        <div id='answer3503' class="qanswer">我的答案：</div>
+
+
+        <div id="question_8">
+            <label class="qtitle">8：[3分]产品标准中的规范性技术要素一般包含：术语和定义、符号和缩略语、要求、抽样、试验方法、检验规则、包装和标签等方面的要素。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13488" name='pd_3488' value='1'
+                                         onclick="loadpd(this,3488,8)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03488" name='pd_3488' value='0'
+                                         onclick="loadpd(this,3488,8)">错误</label>
+        </div>
+        <div id='answer3488' class="qanswer">我的答案：</div>
+
+
+        <div id="question_9">
+            <label class="qtitle">9：[3分]PDCA循环又叫质量环，是管理学中的一个通用模型，最早由休哈特于1930年构想，后来被日本质量管理专家戴明博士在1950年再度挖掘出来，并加以广泛宣传和运用于标准化管理，即按照计划（P）、执行（D）、检查（C）和行动（A）这样的顺序进行质量管理，并且不停顿地周而复始地运转下去的科学程序。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13477" name='pd_3477' value='1'
+                                         onclick="loadpd(this,3477,9)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03477" name='pd_3477' value='0'
+                                         onclick="loadpd(this,3477,9)">错误</label>
+        </div>
+        <div id='answer3477' class="qanswer">我的答案：</div>
+
+
+        <div id="question_10">
+            <label class="qtitle">10：[3分]国际贸易迅猛发展和经济全球化，大大提高了对标准国际化的迫切要求。</label>
+        </div>
+        <div>
+            <label class="qchose"><input type="radio" id="radio0_13533" name='pd_3533' value='1'
+                                         onclick="loadpd(this,3533,10)">正确</label>
+            <label class="qchose"><input type="radio" id="radio0_03533" name='pd_3533' value='0'
+                                         onclick="loadpd(this,3533,10)">错误</label>
+        </div>
+        <div id='answer3533' class="qanswer">我的答案：</div>
+
+        <div class="divider"></div>
+        <label class="qtype">单选题</label>
+
+        <div id="question_11">
+            <label class="qtitle">11：[3分]制定和实施标准化战略，是深圳市实施（  ）战略、建设国家创新型城市的一项重要举措。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3394"
+                                              name='danx_3394' onclick="loaddanx(this,3394,11)"
+                                              value='A'>A
+                    :创新</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3394"
+                                              name='danx_3394' onclick="loaddanx(this,3394,11)"
+                                              value='B'>B
+                    :标准强市</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3394"
+                                              name='danx_3394' onclick="loaddanx(this,3394,11)"
+                                              value='C'>C
+                    :自主创新</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3394"
+                                              name='danx_3394' onclick="loaddanx(this,3394,11)"
+                                              value='D'>D
+                    :科技强市</label>
+            </div>
+        </div>
+        <div id='answer3394' class="qanswer">我的答案：</div>
+
+
+        <div id="question_12">
+            <label class="qtitle">12：[3分]知识产权中的（  ）版权和商标权与标准有着密切的关系。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3410"
+                                              name='danx_3410' onclick="loaddanx(this,3410,12)"
+                                              value='A'>A
+                    :核心技术</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3410"
+                                              name='danx_3410' onclick="loaddanx(this,3410,12)"
+                                              value='B'>B
+                    :专利权</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3410"
+                                              name='danx_3410' onclick="loaddanx(this,3410,12)"
+                                              value='C'>C
+                    :技术秘密</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3410"
+                                              name='danx_3410' onclick="loaddanx(this,3410,12)"
+                                              value='D'>D
+                    :著作权</label>
+            </div>
+        </div>
+        <div id='answer3410' class="qanswer">我的答案：</div>
+
+
+        <div id="question_13">
+            <label class="qtitle">13：[3分]数据统计标准体系主要有（  ）个方面的标准。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3357"
+                                              name='danx_3357' onclick="loaddanx(this,3357,13)"
+                                              value='A'>A
+                    :3</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3357"
+                                              name='danx_3357' onclick="loaddanx(this,3357,13)"
+                                              value='B'>B
+                    :5</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3357"
+                                              name='danx_3357' onclick="loaddanx(this,3357,13)"
+                                              value='C'>C
+                    :6</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3357"
+                                              name='danx_3357' onclick="loaddanx(this,3357,13)"
+                                              value='D'>D
+                    :7</label>
+            </div>
+        </div>
+        <div id='answer3357' class="qanswer">我的答案：</div>
+
+
+        <div id="question_14">
+            <label class="qtitle">14：[3分]1906年英国颁布了（  ）BS27。此后，螺纹、各种零件和材料等也先后实现了标准化，成百倍地提高了劳动生产率。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3340"
+                                              name='danx_3340' onclick="loaddanx(this,3340,14)"
+                                              value='A'>A
+                    :国家标准</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3340"
+                                              name='danx_3340' onclick="loaddanx(this,3340,14)"
+                                              value='B'>B
+                    :行业标准</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3340"
+                                              name='danx_3340' onclick="loaddanx(this,3340,14)"
+                                              value='C'>C
+                    :企业标准</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3340"
+                                              name='danx_3340' onclick="loaddanx(this,3340,14)"
+                                              value='D'>D
+                    :国家公差标准</label>
+            </div>
+        </div>
+        <div id='answer3340' class="qanswer">我的答案：</div>
+
+
+        <div id="question_15">
+            <label class="qtitle">15：[3分]认证是由（  ）对产品、服务或体系符合特定要求而做的书面保证（即认证证书）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3388"
+                                              name='danx_3388' onclick="loaddanx(this,3388,15)"
+                                              value='A'>A
+                    :国家授权的机构</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3388"
+                                              name='danx_3388' onclick="loaddanx(this,3388,15)"
+                                              value='B'>B
+                    :行业组织</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3388"
+                                              name='danx_3388' onclick="loaddanx(this,3388,15)"
+                                              value='C'>C
+                    :独立第三方机构</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3388"
+                                              name='danx_3388' onclick="loaddanx(this,3388,15)"
+                                              value='D'>D
+                    :试验检测机构</label>
+            </div>
+        </div>
+        <div id='answer3388' class="qanswer">我的答案：</div>
+
+
+        <div id="question_16">
+            <label class="qtitle">16：[3分]服务业标准化试点示范项目新增500个以上，社会管理和公共服务标准化程度显著提高。新发布的强制性国家标准开展质量及效益评估的比例达到（  ）以上。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3390"
+                                              name='danx_3390' onclick="loaddanx(this,3390,16)"
+                                              value='A'>A
+                    :40%</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3390"
+                                              name='danx_3390' onclick="loaddanx(this,3390,16)"
+                                              value='B'>B
+                    :50%</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3390"
+                                              name='danx_3390' onclick="loaddanx(this,3390,16)"
+                                              value='C'>C
+                    :60%</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3390"
+                                              name='danx_3390' onclick="loaddanx(this,3390,16)"
+                                              value='D'>D
+                    :45%</label>
+            </div>
+        </div>
+        <div id='answer3390' class="qanswer">我的答案：</div>
+
+
+        <div id="question_17">
+            <label class="qtitle">17：[3分]管理标准是指：对标准化领域中需要协调统一的（  ）所制定的标准。“管理事项”主要指在企业管理活动中，所涉及的经营管理、设计开发与创新管理、质量管理、设备与基础设施管理、人力资源管理、安全管理、职业健康管理、环境管理、信息管理等与技术标准相关联的重复性事务和概念。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3373"
+                                              name='danx_3373' onclick="loaddanx(this,3373,17)"
+                                              value='A'>A
+                    :管理事项</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3373"
+                                              name='danx_3373' onclick="loaddanx(this,3373,17)"
+                                              value='B'>B
+                    :工作流程</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3373"
+                                              name='danx_3373' onclick="loaddanx(this,3373,17)"
+                                              value='C'>C
+                    :人员管理</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3373"
+                                              name='danx_3373' onclick="loaddanx(this,3373,17)"
+                                              value='D'>D
+                    :文化建设</label>
+            </div>
+        </div>
+        <div id='answer3373' class="qanswer">我的答案：</div>
+
+
+        <div id="question_18">
+            <label class="qtitle">18：[3分]参与国际标准化活动能力进一步增强，承担国际标准化技术机构数量持续增长，参与和主导制定国际标准数量达到年度国际标准制修订总数的（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3391"
+                                              name='danx_3391' onclick="loaddanx(this,3391,18)"
+                                              value='A'>A
+                    :40%</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3391"
+                                              name='danx_3391' onclick="loaddanx(this,3391,18)"
+                                              value='B'>B
+                    :50%</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3391"
+                                              name='danx_3391' onclick="loaddanx(this,3391,18)"
+                                              value='C'>C
+                    :45%</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3391"
+                                              name='danx_3391' onclick="loaddanx(this,3391,18)"
+                                              value='D'>D
+                    :60%</label>
+            </div>
+        </div>
+        <div id='answer3391' class="qanswer">我的答案：</div>
+
+
+        <div id="question_19">
+            <label class="qtitle">19：[3分]采标的原则是（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3353"
+                                              name='danx_3353' onclick="loaddanx(this,3353,19)"
+                                              value='A'>A
+                    :必须符合中国国情</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3353"
+                                              name='danx_3353' onclick="loaddanx(this,3353,19)"
+                                              value='B'>B
+                    :凡已有国际标准，应当以其为基础制定我国标准。凡尚无国际标准或国际标准不能适应需要，应当积极采用国外先进标准</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3353"
+                                              name='danx_3353' onclick="loaddanx(this,3353,19)"
+                                              value='C'>C
+                    :必须经过国家有关部门审批</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3353"
+                                              name='danx_3353' onclick="loaddanx(this,3353,19)"
+                                              value='D'>D
+                    :与国际标准完全一致</label>
+            </div>
+        </div>
+        <div id='answer3353' class="qanswer">我的答案：</div>
+
+
+        <div id="question_20">
+            <label class="qtitle">20：[3分]由于工业化和交通运输业的进一步发展，迫切需要解决同样的零部件在更大的范围内实现统一和互换问题，要解决这些问题，需要建立一个协调性组织来统一这些零部件的标准，从而推动世界上第一个（  ）——英国工程标准委员会于1901年诞生，它标志着标准化从此步入了一个新的发展阶段。此后不久，约有25个国家相继成立了国家标准化组织。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_A3342"
+                                              name='danx_3342' onclick="loaddanx(this,3342,20)"
+                                              value='A'>A
+                    :国家标准化组织</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_B3342"
+                                              name='danx_3342' onclick="loaddanx(this,3342,20)"
+                                              value='B'>B
+                    :行业标准化组织</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_C3342"
+                                              name='danx_3342' onclick="loaddanx(this,3342,20)"
+                                              value='C'>C
+                    :国际标准化组织</label>
+            </div>
+            <div>
+                <label class="qchose"> <input type="radio" id="radio1_D3342"
+                                              name='danx_3342' onclick="loaddanx(this,3342,20)"
+                                              value='D'>D
+                    :地方标准化组织</label>
+            </div>
+        </div>
+        <div id='answer3342' class="qanswer">我的答案：</div>
+
+
+        <div class="divider"></div>
+        <label class="qtype">多选题</label>
+        <div id="question_21">
+            <label class="qtitle">21：[4分]从理论和政策实践角度看，标准体系基本上有两大主线：一是（  ）主线、二是（  ）主线。价值性主线涉及的是标准体系要体现“以人为本”的精神，维护劳动者的权益，维护社会公平和正义；科学性主线涉及的是如何提高效率</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3454" name='3454'
+                           onclick="loadduox(this,3454,21)" value='A'>A
+                    :公平性                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3454" name='3454'
+                           onclick="loadduox(this,3454,21)" value='B'>B
+                    :价值性                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3454" name='3454'
+                           onclick="loadduox(this,3454,21)" value='C'>C
+                    :科学性                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3454" name='3454'
+                           onclick="loadduox(this,3454,21)" value='D'>D
+                    :效率性                            </label>
+            </div>
+        </div>
+        <div id='answer3454' class="qanswer">我的答案：</div>
+
+        <div id="question_22">
+            <label class="qtitle">22：[4分]到2020年，基本建成支撑国家治理体系和治理能力现代化的具有中国特色的标准化体系。标准化战略全面实施，标准有效性、先进性和适用性显著增强。标准化体制机制更加健全，标准服务发展更加高效，基本形成市场规范（  ）、公共利益（  ）、创新驱动（  ）、转型升级（  ）的新局面。‘中国标准’国际影响力和贡献力大幅提升，我国迈入世界标准强国行列。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3444" name='3444'
+                           onclick="loadduox(this,3444,22)" value='A'>A
+                    :有标可循                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3444" name='3444'
+                           onclick="loadduox(this,3444,22)" value='B'>B
+                    :有标可保                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3444" name='3444'
+                           onclick="loadduox(this,3444,22)" value='C'>C
+                    :有标引领                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3444" name='3444'
+                           onclick="loadduox(this,3444,22)" value='D'>D
+                    :有标支撑                            </label>
+            </div>
+        </div>
+        <div id='answer3444' class="qanswer">我的答案：</div>
+
+        <div id="question_23">
+            <label class="qtitle">23：[4分]工作标准的内容和制定方法有：（  ）（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3435" name='3435'
+                           onclick="loadduox(this,3435,23)" value='A'>A
+                    :明确该岗位在企业生产经营管理活动中所应承担的工作目标                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3435" name='3435'
+                           onclick="loadduox(this,3435,23)" value='B'>B
+                    :管理人员的工作内容应注意尽量避免交叉，明确接口，工作内容应由主管管理者确定，对管理人员应侧重于效率和服务的要求                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3435" name='3435'
+                           onclick="loadduox(this,3435,23)" value='C'>C
+                    :按领导要求办                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3435" name='3435'
+                           onclick="loadduox(this,3435,23)" value='D'>D
+                    :PDCA                            </label>
+            </div>
+        </div>
+        <div id='answer3435' class="qanswer">我的答案：</div>
+
+        <div id="question_24">
+            <label class="qtitle">24：[4分]标准化基本方法包括：（  ）（  ）（  ）（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3422" name='3422'
+                           onclick="loadduox(this,3422,24)" value='A'>A
+                    :简化、统一化                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3422" name='3422'
+                           onclick="loadduox(this,3422,24)" value='B'>B
+                    :通用化                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3422" name='3422'
+                           onclick="loadduox(this,3422,24)" value='C'>C
+                    :系列化                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3422" name='3422'
+                           onclick="loadduox(this,3422,24)" value='D'>D
+                    :组合化、模块化                            </label>
+            </div>
+        </div>
+        <div id='answer3422' class="qanswer">我的答案：</div>
+
+        <div id="question_25">
+            <label class="qtitle">25：[4分]标准参数的制定方法主要有：（  ）（  ）（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3425" name='3425'
+                           onclick="loadduox(this,3425,25)" value='A'>A
+                    :理论研究方法                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3425" name='3425'
+                           onclick="loadduox(this,3425,25)" value='B'>B
+                    :实践经验法                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3425" name='3425'
+                           onclick="loadduox(this,3425,25)" value='C'>C
+                    :科学实验法                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3425" name='3425'
+                           onclick="loadduox(this,3425,25)" value='D'>D
+                    :功能展开法                            </label>
+            </div>
+        </div>
+        <div id='answer3425' class="qanswer">我的答案：</div>
+
+        <div id="question_26">
+            <label class="qtitle">26：[4分]产品标准编写的依据：（  ）（  ）（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3427" name='3427'
+                           onclick="loadduox(this,3427,26)" value='A'>A
+                    :相关的国家标准、行业标准、法律法规                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3427" name='3427'
+                           onclick="loadduox(this,3427,26)" value='B'>B
+                    :GB/T 1.1-2009《标准化工作导则  第一部分：标准的结构和编写规则》                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3427" name='3427'
+                           onclick="loadduox(this,3427,26)" value='C'>C
+                    :其他标准化规范性文件                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3427" name='3427'
+                           onclick="loadduox(this,3427,26)" value='D'>D
+                    :行业有关政策                            </label>
+            </div>
+        </div>
+        <div id='answer3427' class="qanswer">我的答案：</div>
+
+        <div id="question_27">
+            <label class="qtitle">27：[4分]国家标准与国际标准的一致性程度分为：（  ）（  ）（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3424" name='3424'
+                           onclick="loadduox(this,3424,27)" value='A'>A
+                    :等同                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3424" name='3424'
+                           onclick="loadduox(this,3424,27)" value='B'>B
+                    :修改                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3424" name='3424'
+                           onclick="loadduox(this,3424,27)" value='C'>C
+                    :部分等同                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3424" name='3424'
+                           onclick="loadduox(this,3424,27)" value='D'>D
+                    :非等效                            </label>
+            </div>
+        </div>
+        <div id='answer3424' class="qanswer">我的答案：</div>
+
+        <div id="question_28">
+            <label class="qtitle">28：[4分]人员标准编写技术过程包括（  ）（  ）（  ）（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3431" name='3431'
+                           onclick="loadduox(this,3431,28)" value='A'>A
+                    :职业的认定                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3431" name='3431'
+                           onclick="loadduox(this,3431,28)" value='B'>B
+                    : 对于不构成一个职业，但对于行业或者组织，已经具备某些职业要素的情形，一般是按照“岗位任职资格”来进行“资格标准”制定的                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3431" name='3431'
+                           onclick="loadduox(this,3431,28)" value='C'>C
+                    : 职业调查                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3431" name='3431'
+                           onclick="loadduox(this,3431,28)" value='D'>D
+                    :按照职业资格标准的结构和内容要求进行人员标准的编制。包括从业者的基本能力素质要求、知识技能要求、职业道德要求等。需要说明的是有关要求要有明确的标准和培训、考核的要求                            </label>
+            </div>
+        </div>
+        <div id='answer3431' class="qanswer">我的答案：</div>
+
+        <div id="question_29">
+            <label class="qtitle">29：[4分]按标准的强制性分类，标准可以分为（  ）（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3417" name='3417'
+                           onclick="loadduox(this,3417,29)" value='A'>A
+                    :强制性标准                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3417" name='3417'
+                           onclick="loadduox(this,3417,29)" value='B'>B
+                    :国际标准                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3417" name='3417'
+                           onclick="loadduox(this,3417,29)" value='C'>C
+                    :推荐性标准                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3417" name='3417'
+                           onclick="loadduox(this,3417,29)" value='D'>D
+                    :国家标准                            </label>
+            </div>
+        </div>
+        <div id='answer3417' class="qanswer">我的答案：</div>
+
+        <div id="question_30">
+            <label class="qtitle">30：[4分]按标准的适用范围分类，标准可以分为（  ）（  ）（  ）（  ）。</label>
+        </div>
+        <div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_A3419" name='3419'
+                           onclick="loadduox(this,3419,30)" value='A'>A
+                    :国家标准                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_B3419" name='3419'
+                           onclick="loadduox(this,3419,30)" value='B'>B
+                    :地方标准                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_C3419" name='3419'
+                           onclick="loadduox(this,3419,30)" value='C'>C
+                    :行业标准                            </label>
+            </div>
+            <div>
+                <label class="qchose">
+                    <input type="checkbox" id="radio2_D3419" name='3419'
+                           onclick="loadduox(this,3419,30)" value='D'>D
+                    :企业标准、团体标准                            </label>
+            </div>
+        </div>
+        <div id='answer3419' class="qanswer">我的答案：</div>
+
+    </div>
+    <table cellspacing="1" cellpadding="2" border="0" bgcolor="#7aaee3" bgcolor1="#906000" id="idboxs"
+           style="width:50%">
+        <tbody>
+
+        <tr bgcolor="#FFFFFF" align="center">
+
+            <td class="ExamOrderViewWait" id="EOV1"><span onclick="showPoint('question_1')">第1 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV2"><span onclick="showPoint('question_2')">第2 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV3"><span onclick="showPoint('question_3')">第3 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV4"><span onclick="showPoint('question_4')">第4 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV5"><span onclick="showPoint('question_5')">第5 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV6"><span onclick="showPoint('question_6')">第6 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV7"><span onclick="showPoint('question_7')">第7 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV8"><span onclick="showPoint('question_8')">第8 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV9"><span onclick="showPoint('question_9')">第9 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV10"><span onclick="showPoint('question_10')">第10 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV11"><span onclick="showPoint('question_11')">第11 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV12"><span onclick="showPoint('question_12')">第12 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV13"><span onclick="showPoint('question_13')">第13 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV14"><span onclick="showPoint('question_14')">第14 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV15"><span onclick="showPoint('question_15')">第15 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV16"><span onclick="showPoint('question_16')">第16 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV17"><span onclick="showPoint('question_17')">第17 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV18"><span onclick="showPoint('question_18')">第18 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV19"><span onclick="showPoint('question_19')">第19 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV20"><span onclick="showPoint('question_20')">第20 题</span></td>
+        </tr>
+        <tr bgcolor="#FFFFFF" align="center">
+
+            <td class="ExamOrderViewWait" id="EOV21"><span onclick="showPoint('question_21')">第21 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV22"><span onclick="showPoint('question_22')">第22 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV23"><span onclick="showPoint('question_23')">第23 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV24"><span onclick="showPoint('question_24')">第24 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV25"><span onclick="showPoint('question_25')">第25 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV26"><span onclick="showPoint('question_26')">第26 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV27"><span onclick="showPoint('question_27')">第27 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV28"><span onclick="showPoint('question_28')">第28 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV29"><span onclick="showPoint('question_29')">第29 题</span></td>
+            <td class="ExamOrderViewWait" id="EOV30"><span onclick="showPoint('question_30')">第30 题</span></td>
+        </tr>
+        </tbody>
+    </table>
+    <a id="changeToUrl" href=""></a>
+    <div class="formBar" id="subbutton">
+        <ul>
+
+            <button class="button white" id="subform" type="submit" onclick="initmsg()">交卷</button>
+        </ul>
+    </div>
+</form>
+</body>
+
+<script type="text/javascript">
+    function showPoint(msg){
+        var url =window.location.href;
+        var kk = url.indexOf("#");
+        if(kk>0){
+            var url1 =url.substring(0,kk) +"#"+msg;
+            $("#changeToUrl").attr("href",url1);
+            document.getElementById("changeToUrl").click();
+        }else{
+            var url1 =url +"#"+msg;
+            $("#changeToUrl").attr("href",url1);
+            document.getElementById("changeToUrl").click();
+        }
+    }
+
+    //方法一：
+    //获取url中的参数
+    function getUrlParam(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+        var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+        if (r != null) return unescape(r[2]);
+        return null; //返回参数值
+    }
+
+    document.getElementById("planid").setAttribute('value', getUrlParam('planid'));
+    document.getElementById("ordersid").setAttribute('value', getUrlParam('ordersid'));
+    document.getElementById("courseid").setAttribute('value', getUrlParam('courseid'));
+    document.getElementById("cardno").setAttribute('value', getUrlParam('cardno'));
+    document.getElementById("type").setAttribute('value', getUrlParam('type'));
+    reloadmsg();
+</script>
