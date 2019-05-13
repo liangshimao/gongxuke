@@ -139,3 +139,39 @@ function getJsonResult($string)
     $result = substr($string,$left+1,$right-$left-1);
     return json_decode($result,true);
 }
+
+function choose_course2019()
+{
+    $url = 'http://hbs.zgzjzj.com/u/plancoursechoseing';
+    $post_data = 'plan=%E6%B2%B3%E5%8C%97%E7%9C%812019%E5%B9%B4%E5%BA%A6%E4%B8%93%E4%B8%9A%E6%8A%80%E6%9C%AF%E4%BA%BA%E5%91%98%E5%85%AC%E9%9C%80%E7%A7%91%E7%9B%AE%E5%9F%B9%E8%AE%AD&planid=340&coursemessage=%E4%B9%A0%E8%BF%91%E5%B9%B3%E6%96%B0%E6%97%B6%E4%BB%A3%E4%B8%AD%E5%9B%BD%E7%89%B9%E8%89%B2%E7%A4%BE%E4%BC%9A%E4%B8%BB%E4%B9%89%E6%80%9D%E6%83%B3%E8%A7%A3%E8%AF%BB%3A%3A650%3A%3A10%3A%3A0%2C%E5%BC%98%E6%89%AC%E5%B7%A5%E5%8C%A0%E7%B2%BE%E7%A5%9E+%E8%BF%88%E5%90%91%E5%88%B6%E9%80%A0%E5%BC%BA%E5%9B%BD%3A%3A682%3A%3A10%3A%3A0%2C&coursemessage_num=20&coursemessage_1=%E7%AA%81%E5%8F%91%E4%BA%8B%E4%BB%B6%E5%85%B8%E5%9E%8B%E6%A1%88%E4%BE%8B%E5%89%96%E6%9E%90%3A%3A640%3A%3A10%3A%3A1%2C&coursemessage_1num=10';
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST,true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_COOKIEJAR, dirname(__FILE__).'/cookie.txt'); //存储cookies
+    curl_setopt($ch, CURLOPT_COOKIEFILE, dirname(__FILE__).'/cookie.txt'); //存储cookies
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); //存储cookies
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return $result;
+}
+
+function apply()
+{
+    $url = 'http://hbs.zgzjzj.com/u/plans/Apply?studytype=PLAN&studyid=340';
+    //$post_data = 'plan=%E6%B2%B3%E5%8C%97%E7%9C%812019%E5%B9%B4%E5%BA%A6%E4%B8%93%E4%B8%9A%E6%8A%80%E6%9C%AF%E4%BA%BA%E5%91%98%E5%85%AC%E9%9C%80%E7%A7%91%E7%9B%AE%E5%9F%B9%E8%AE%AD&planid=340&coursemessage=%E4%B9%A0%E8%BF%91%E5%B9%B3%E6%96%B0%E6%97%B6%E4%BB%A3%E4%B8%AD%E5%9B%BD%E7%89%B9%E8%89%B2%E7%A4%BE%E4%BC%9A%E4%B8%BB%E4%B9%89%E6%80%9D%E6%83%B3%E8%A7%A3%E8%AF%BB%3A%3A650%3A%3A10%3A%3A0%2C%E5%BC%98%E6%89%AC%E5%B7%A5%E5%8C%A0%E7%B2%BE%E7%A5%9E+%E8%BF%88%E5%90%91%E5%88%B6%E9%80%A0%E5%BC%BA%E5%9B%BD%3A%3A682%3A%3A10%3A%3A0%2C&coursemessage_num=20&coursemessage_1=%E7%AA%81%E5%8F%91%E4%BA%8B%E4%BB%B6%E5%85%B8%E5%9E%8B%E6%A1%88%E4%BE%8B%E5%89%96%E6%9E%90%3A%3A640%3A%3A10%3A%3A1%2C&coursemessage_1num=10';
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    //curl_setopt($ch, CURLOPT_POST,true);
+    //curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_COOKIEJAR, dirname(__FILE__).'/cookie.txt'); //存储cookies
+    curl_setopt($ch, CURLOPT_COOKIEFILE, dirname(__FILE__).'/cookie.txt'); //存储cookies
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); //存储cookies
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return $result;
+}

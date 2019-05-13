@@ -64,6 +64,10 @@ if($loginRes['code'] == 0){
     die;
 }
 
+echo '开始选课';
+choose_course2019();
+sleep(3);
+
 //$userID = 1222233;
 foreach($couserray as $plan=>$course){
     foreach ($course as $c=>$video){
@@ -92,6 +96,9 @@ foreach ($answer as $k=>$a){
     post_exam($a);
     echo "考完第".($k+1)."门！\n";
 }
+sleep(3);
+
+apply();
 
 
 
