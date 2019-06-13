@@ -78,7 +78,7 @@ foreach($couserray as $plan=>$course){
                 //var_dump($uuidRes);die;
             }while(strlen($uuidRes)>500);
             //var_dump($uuidRes);die;
-            $play_uuid = substr($uuidRes,strpos($uuidRes,'play.html?uuids=')+16,8);
+            $play_uuid = substr($uuidRes,strpos($uuidRes,'play.html?uuids=')+16,9);
             echo $play_uuid;
             echo "\n";
             for($i=0;$i<3;$i++)
